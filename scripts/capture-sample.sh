@@ -8,7 +8,8 @@
 #                                  [--exe PATH] [--xdotool 'COMMANDS']
 #
 # --exe captures another executable the same way -- the retained C++ port, for the reference the
-# C# capture is compared against. The sample directory still names the output file.
+# C# capture is compared against, or a games/ project's build. The sample directory still names
+# the output file, and need not exist then.
 #
 # --xdotool drives the focused window after the settle time and before the capture, e.g.
 # 'keydown Right sleep 1.5 keyup Right' (xdotool's own chaining), so input has evidence too.
@@ -24,6 +25,10 @@
 # The sample runs with a private home under the output directory and no session bus: a sample that
 # starts GamerServices otherwise reads and writes the developer's own CNA profiles, credentials and
 # asset cache (XDG data/state/cache, the Secret Service). Mesa keeps its shared shader cache.
+# "No session bus" is an address that cannot connect, not an unset one: unset, D-Bus clients fall
+# back to $XDG_RUNTIME_DIR/bus, the developer's own bus, and inside CNA's private runner (which has
+# none there) an "xdg-desktop-portal-gtk" window appeared on the private display and was captured
+# instead of the sample's.
 set -euo pipefail
 
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -41,7 +46,7 @@ while [ $# -gt 0 ]; do
         --no-exit-check)  check_exit=0; shift ;;
         --exe)            exe_override="$2"; shift 2 ;;
         --xdotool)        input="$2"; shift 2 ;;
-        -h|--help)        sed -n '2,21p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+        -h|--help)        sed -n '2,23p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
         -*)               echo "error: unknown option $1" >&2; exit 2 ;;
         *)                sample="$1"; shift ;;
     esac
@@ -52,7 +57,7 @@ done
 [ -n "$out" ]            || { echo "error: --out is required" >&2; exit 2; }
 
 project_dir="$here/samples/$sample"
-[ -d "$project_dir" ] || { echo "error: $project_dir does not exist" >&2; exit 2; }
+[ -n "$exe_override" ] || [ -d "$project_dir" ] || { echo "error: $project_dir does not exist" >&2; exit 2; }
 mkdir -p "$out"
 
 lib="${CNA_NATIVE_LIBRARY:-$("$here/scripts/build-native-cna.sh" --no-build)}"
@@ -82,6 +87,14 @@ cleanup() {
 }
 trap cleanup EXIT
 for _ in $(seq 1 100); do DISPLAY="$display" xdpyinfo >/dev/null 2>&1 && break; sleep 0.1; done
+# A display number another X server already holds makes this Xvfb exit at once, and the wait above
+# then succeeds against THAT server: the sample would run, and be captured, on someone else's
+# display. The lock file names the server that owns the number.
+if [ "$(tr -d ' \n' <"/tmp/.X${display#:}-lock" 2>/dev/null)" != "$xvfb_pid" ]; then
+    echo "error: Xvfb did not start on $display (taken? pick another with --display or CNA_CAPTURE_DISPLAY_NUMBER)" >&2
+    cat "$out/xvfb.log" >&2
+    exit 1
+fi
 
 private_home="$(cd "$out" && pwd)/home"
 mkdir -p "$private_home"
@@ -89,7 +102,8 @@ mesa_cache="${MESA_SHADER_CACHE_DIR:-${XDG_CACHE_HOME:-$HOME/.cache}/mesa_shader
 cd "$(dirname "$exe")"
 # Sound goes nowhere unless asked for: the private display has no speakers of its own, and SDL would
 # otherwise find the developer's sound server through XDG_RUNTIME_DIR.
-env -u WAYLAND_DISPLAY -u DBUS_SESSION_BUS_ADDRESS DISPLAY="$display" SDL_VIDEODRIVER=x11 LIBGL_ALWAYS_SOFTWARE=1 \
+env -u WAYLAND_DISPLAY DBUS_SESSION_BUS_ADDRESS="unix:path=$private_home/no-session-bus" \
+    DISPLAY="$display" SDL_VIDEODRIVER=x11 LIBGL_ALWAYS_SOFTWARE=1 \
     SDL_AUDIODRIVER="${CNA_CAPTURE_AUDIODRIVER:-dummy}" \
     HOME="$private_home" XDG_DATA_HOME="$private_home/.local/share" XDG_STATE_HOME="$private_home/.local/state" \
     XDG_CONFIG_HOME="$private_home/.config" XDG_CACHE_HOME="$private_home/.cache" \

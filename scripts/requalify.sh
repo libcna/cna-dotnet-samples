@@ -5,6 +5,12 @@
 #
 # Usage: scripts/requalify.sh [--out DIR] [--settle SECONDS] [--xdotool 'COMMANDS'] [SampleDirectory ...]
 #
+# Run it inside CNA's private runner, which keeps the desktop, the session bus and the sound server
+# out of reach (each capture still starts its own Xvfb there):
+#   env -u DISPLAY -u WAYLAND_DISPLAY -u SDL_VIDEODRIVER SDL_AUDIODRIVER=dummy \
+#       ../cna/tools/platform/run_gpu_tests_private.sh --exec scripts/requalify.sh
+# CNA_NATIVE_LIBRARY names the library to load (else build-native-cna.sh --no-build picks a tree).
+#
 # --xdotool gives the C# run and the C++ port the same input before their captures
 # (capture-sample.sh --xdotool), so an interaction is measured like a first frame.
 #
@@ -29,11 +35,17 @@ while [ $# -gt 0 ]; do
         --out)    out="$2"; shift 2 ;;
         --settle) settle="$2"; shift 2 ;;
         --xdotool) input=(--xdotool "$2"); shift 2 ;;
-        -h|--help) sed -n '2,18p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+        -h|--help) sed -n '2,22p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
         -*)       echo "error: unknown option $1" >&2; exit 2 ;;
         *)        rows+=("$1"); shift ;;
     esac
 done
+
+# One native library for the whole pass, exported so every capture loads it: CNA_NATIVE_LIBRARY
+# when the caller names one (a C API install outside ../cna, for instance), else the tree
+# build-native-cna.sh picks.
+CNA_NATIVE_LIBRARY="${CNA_NATIVE_LIBRARY:-$("$here/scripts/build-native-cna.sh" --no-build)}"
+export CNA_NATIVE_LIBRARY
 
 stamp="$(date +%Y%m%d)-dotnet$(git -C "$dotnet_root" rev-parse --short HEAD)-cna$(git -C "$cna_root" rev-parse --short HEAD)"
 out="${out:-/rv/tmp/cs-samples/requal-$stamp}"
@@ -62,7 +74,7 @@ table="$out/requalification.md"
     echo "# Requalification $stamp"
     echo
     echo "CNA.NET \`$(git -C "$dotnet_root" rev-parse --short HEAD)\`, CNA \`$(git -C "$cna_root" rev-parse --short HEAD)\`,"
-    echo "native \`$("$here/scripts/build-native-cna.sh" --no-build)\`, private Xvfb, settle ${settle}s."
+    echo "native \`$CNA_NATIVE_LIBRARY\`, private Xvfb, settle ${settle}s."
     echo
     echo "| Sample | Build | Run + capture | Exit | vs C++ port | Window |"
     echo "|---|---|---|---|---|---|"

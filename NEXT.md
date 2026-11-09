@@ -5,6 +5,189 @@ inherits.
 
 ---
 
+## Active handoff — 2026-11-09: every row requalified on CNA `bc5e3c9a2` (C ABI 0.60.0)
+
+Every `samples/manifest.tsv` row was rebuilt (Debug and Release), run, captured and, where its
+source has one, taken through its own exit path against the current chain: 84 of 84 pass. No CNA,
+CNA.NET or sharp-runtime defect was found. One row had a latent defect of its own glue (ShipGame's
+Single Player, fixed in its project file), and the capture tooling needed three fixes to run inside
+CNA's private runner.
+
+### Chain
+
+| Repository | Head |
+|---|---|
+| cna-dotnet-samples | `develop` `2779db2` plus the uncommitted changes listed below |
+| `../cna-dotnet` | `develop` `f23f73b`; its ABI matrix admits exactly 0.60.0 |
+| `../cna` | `next` `bc5e3c9a2`, C ABI 0.60.0 |
+| `../sharp-runtime` | `next` `0abe8a91` (inside the CNA library) |
+| Native library | `../cna-dotnet/build-probe/cna-capi-install/lib/libcna_c_api.so`: Release, `OPENGLES3`, `CNA_EASYGL_COMPILED_EFFECTS=ON`, built from CNA `30142a14d`; `bc5e3c9a2` differs from it only in CMake and documentation files |
+| Toolchain | .NET SDK 8.0.425; EasyGL on OpenGL ES 3.2, Mesa 25.0.7 llvmpipe, on the per-capture Xvfb |
+
+### How it was run
+
+```bash
+taskset -c 0-5 env -u TMPDIR -u DISPLAY -u WAYLAND_DISPLAY -u SDL_VIDEODRIVER \
+    SDL_AUDIODRIVER=dummy SDL_ASSERT=abort MSBUILDDISABLENODEREUSE=1 CNA_CAPTURE_DISPLAY_NUMBER=173 \
+    CNA_NATIVE_LIBRARY=$PWD/../cna-dotnet/build-probe/cna-capi-install/lib/libcna_c_api.so \
+    ../cna/tools/platform/run_gpu_tests_private.sh --exec scripts/requalify.sh \
+    --out /rv/tmp/cs-samples/requal-20261109-dotnetf23f73b-cnabc5e3c9a2
+```
+
+Rows whose exit is a menu or a sign-in were then taken through it with `scripts/capture-sample.sh
+--xdotool ... --exit-key ...` in the same runner (`exit-*`, `exit2-*`, `exit4-*` in the output
+directory). Menu keys are held (`keydown Down sleep 0.3 keyup Down`): a game that polls its keyboard
+once a frame does not see an XTEST tap shorter than a frame, and a lost Down turned Quit Game into
+Single Player, which is how the ShipGame defect below was found.
+
+The static checks: `scripts/check-verbatim.sh` with `XNA_SAMPLES_ROOT=/rv/data/library/XNAGameStudio/Samples`
+(the `/rv/tmp/XNAGameStudio` snapshot is gone; this copy holds all 84 upstream subtrees): 84 checked,
+0 failures. `scripts/check-content.sh`: 2138 identical, 0 drifted, 0 sourced elsewhere.
+`scripts/check-eligibility.sh` exits 1: `../cna-samples` now yields 90 eligible rows, six of them new
+(below).
+
+### Samples, one line per row
+
+Build is Debug and Release; every row built with 0 errors (5 warnings in all, upstream's own CS0618
+and CS8073). Every run log is free of exceptions, failures and refusals. "No key in source" rows read
+no exit key, so there is nothing to press (as on 2026-10-01). The C++ column compares the first frame
+with the retained `/rv/tmp/samples/SAMPLE-*/cna-native-opengles3` binary, which was built from an
+older CNA (September): it is a measurement, not evidence of a regression. Animated rows differ by
+phase and clock-seeded ones (the three particle rows, ParticleSample) by construction.
+
+| Sample | Build | Run + capture | Exit | vs C++ port | Window |
+|---|---|---|---|---|---|
+| AimingSample | pass | pass | Escape, code 0 | 0.00% (0 px) | AimingSample 853x480 |
+| Audio3D | pass | pass | Escape, code 0 | 2.89% (11110 px) | Audio 3D 800x480 |
+| Bounce | pass | pass | Escape, code 0 | 10.52% (40384 px) | Bounce 800x480 |
+| ChaseAndEvade | pass | pass | Escape, code 0 | 0.90% (3687 px) | ChaseAndEvade 853x480 |
+| ColorReplacement | pass | pass | Escape, code 0 | 6.87% (26391 px) | Color Replacement 800x480 |
+| ContentManifestExtensions | pass | pass | Escape, code 0 | 0.00% (0 px) | SampleGame 800x480 |
+| FlockingSample | pass | pass | Escape, code 0 | 2.87% (11003 px) | Flocking 800x480 |
+| FuzzyLogic | pass | pass | Escape, code 0 | 5.09% (19529 px) | FuzzyLogic 800x480 |
+| GesturesSample | pass | pass | Escape, code 0 | 0.00% (0 px) | TouchGestureSample 800x480 |
+| InputReporter | pass | pass | Escape, code 0 | 0.00% (0 px) | Input Reporter 853x480 |
+| InputSequence | pass | pass | Escape, code 0 | 0.00% (0 px) | Input Sequence 800x480 |
+| LocalizationSample | pass | pass | Escape, code 0 | 0.00% (0 px) | Localization Sample 800x480 |
+| MicrophoneEcho | pass | pass | Escape, code 0 | 0.00% (0 px) | MicrophoneEchoSample 800x480 |
+| Orientation | pass | pass | Escape, code 0 | 0.45% (1722 px) | OrientationSample 800x480 |
+| ParticleSample | pass | pass | Escape, code 0 | 53.67% (206091 px) | ParticleSample 800x480 |
+| PathDrawing | pass | pass | Escape, code 0 | 0.00% (0 px) | PathDrawing 800x480 |
+| Pathfinding | pass | pass | no key in source | 0.00% (0 px) | Pathfinding 800x480 |
+| PerPixelCollision | pass | pass | Escape, code 0 | 0.47% (1788 px) | Per Pixel Collision 800x480 |
+| Primitives3D | pass | pass | Escape, code 0 | 7.30% (28020 px) | Primitives3D 800x480 |
+| PrimitivesSample | pass | pass | Escape, code 0 | 0.39% (1611 px) | Primitives 853x480 |
+| RectangleCollision | pass | pass | Escape, code 0 | 1.05% (4034 px) | Rectangle Collision 800x480 |
+| SafeArea | pass | pass | Escape, code 0 | 0.00% (0 px) | Safe Area Sample 1280x720 |
+| ShapeRendering | pass | pass | Escape, code 0 | 1.32% (5081 px) | ShapeRenderingSample 800x480 |
+| SnowShovel | pass | pass | Escape, code 0 | 6.42% (24646 px) | SnowShovel 480x800 |
+| SpriteEffects | pass | pass | Escape, code 0 | 7.44% (28578 px) | Sprite Effects 800x480 |
+| SpriteSheet | pass | pass | Escape, code 0 | 7.19% (29419 px) | SpriteSheetSample 853x480 |
+| TouchThumbsticks | pass | pass | Escape, code 0 | 0.20% (755 px) | TouchThumbSticks 800x480 |
+| TransformedCollision | pass | pass | Escape, code 0 | 4.08% (15686 px) | Transformed Collision 800x480 |
+| TransformedCollisionTest | pass | pass | Escape, code 0 | 0.00% (0 px) | Transformed Collision Test 800x480 |
+| WaypointSample | pass | pass | Escape, code 0 | 0.00% (0 px) | Waypoints 853x480 |
+| AccelerometerSample | pass | pass | Escape, code 0 | 0.00% (0 px) | Accelerometer 480x800 |
+| SimpleAnimation | pass | pass | Escape, code 0 | 2.11% (8120 px) | Simple Animation 800x480 |
+| SplitScreen | pass | pass | Escape, code 0 | 4.79% (18396 px) | SplitScreenSample 800x480 |
+| ShatterEffect | pass | pass | Escape, code 0 | 0.00% (13 px) | Shatter Effect 800x480 |
+| CustomModelClass | pass | pass | Escape, code 0 | 4.20% (16110 px) | Custom Model 800x480 |
+| NonPhotoRealistic | pass | pass | Escape, code 0 | 6.11% (23455 px) | Non-Photorealistic 800x480 |
+| ShadowMapping | pass | pass | Escape, code 0 | 0.01% (31 px) | Shadow Mapping 800x480 |
+| GeneratedGeometry | pass | pass | Escape, code 0 | 4.89% (18783 px) | Generated Geometry 800x480 |
+| CameraShake | pass | pass | Escape, code 0 | 1.81% (6956 px) | CameraShake 800x480 |
+| LensFlare | pass | pass | Escape, code 0 | 1.27% (4859 px) | Lens Flare 800x480 |
+| CustomModelEffect | pass | pass | Escape, code 0 | 6.68% (25646 px) | Custom Model Effect 800x480 |
+| NormalMappingEffect | pass | pass | Escape, code 0 | 0.01% (22 px) | Normal Mapping 800x480 |
+| BloomSample | pass | pass | Escape, code 0 | 13.50% (51833 px) | Bloom Postprocess 800x480 |
+| BillboardSample | pass | pass | Escape, code 0 | 7.31% (28058 px) | Billboard Sample 800x480 |
+| InstancedModel | pass | pass | Escape, code 0 | 14.25% (54736 px) | Instanced Model 800x480 |
+| ModelImporterSample | pass | pass | Escape, code 0 | 5.28% (20287 px) | Model Importer 800x480 |
+| ChaseCamera | pass | pass | Escape, code 0 | 1.31% (5382 px) | ChaseCameraSample 853x480 |
+| HeightmapCollision | pass | pass | Escape, code 0 | 0.00% (0 px) | Heightmap Collision 800x480 |
+| Graphics3D | pass | pass | Escape, code 0 | C++ frame black (phone binary asks for full screen) | Graphics 3D Sample 800x480 |
+| SoundAndMusic | pass | pass | Escape, code 0 | 0.00% (0 px) | Sound And Music Sample 480x800 |
+| DistortionSample | pass | pass | Escape, code 0 | 0.00% (0 px) | Distortion Sample 800x480 |
+| SkinningSample | pass | pass | Escape, code 0 | 9.61% (36918 px) | Skinning Sample 800x480 |
+| RimLighting | pass | pass | Escape, code 0 | 0.00% (5 px) | RimLighting 480x800 |
+| TexturesAndColors | pass | pass | Escape, code 0 | 2.77% (10635 px) | Textures And Colors 800x480 |
+| PickingSample | pass | pass | Escape, code 0 | 14.54% (55849 px) | Picking 800x480 |
+| VertexLighting | pass | pass | Escape, code 0 | 1.08% (4130 px) | Vertex Lighting 800x480 |
+| InverseKinematics | pass | pass | Escape, code 0 | 3.22% (13200 px) | InverseKinematics 853x480 |
+| TankOnHeightmap | pass | pass | Escape, code 0 | 0.00% (0 px) | Heightmap Collision With Normals 800x480 |
+| PerPixelLighting | pass | pass | Escape, code 0 | 1.08% (4130 px) | Per-Pixel Lighting 800x480 |
+| TrianglePicking | pass | pass | Escape, code 0 | 0.03% (107 px) | Triangle Picking 800x480 |
+| SoccerPitch | pass | pass | Escape, code 0 | 7.45% (28591 px) | SoccerPitch 480x800 |
+| Particles3D | pass | pass | Escape, code 0 | 63.06% (242161 px) | 3D Particles 800x480 |
+| Particles2DPipeline | pass | pass | Escape, code 0 | 44.18% (169656 px) | Particles2DPipelineSample 800x480 |
+| XmlParticles | pass | pass | Escape, code 0 | 62.80% (241156 px) | 3D Particles 800x480 |
+| CustomModelAnimation | pass | pass | Escape, code 0 | 0.00% (0 px) | CustomModelAnimationSample 800x480 |
+| SkinnedModelExtensions | pass | pass | Escape, code 0 | 10.61% (40732 px) | Skinned Model Extensions 800x480 |
+| CPUSkinning | pass | pass | no key in source | 8.96% (34409 px) | CPU Skinning 800x480 |
+| ReachGraphicsDemo | pass | pass | no key in source | 7.84% (30112 px) | MIX10 Graphics Demo 480x800 |
+| Platformer | pass | pass | no key in source | 1.59% (6102 px) | Platformer 800x480 |
+| CollisionSample | pass | pass | Escape, code 0 | 0.65% (2680 px) | Collision 853x480 |
+| GameStateManagement | pass | pass | Escape opens its exit box, Enter: code 0 | 0.96% (3931 px) | GameStateManagementSample 853x480 |
+| PerformanceMeasuring | pass | pass | Escape, code 0 | 13.25% (50894 px) | PerformanceMeasuring 800x480 |
+| UISample | pass | pass | Escape, code 0 | 0.00% (0 px) | UserInterfaceSample 800x480 |
+| DynamicMenu | pass | pass | Escape, code 0 | 0.00% (0 px) | DynamicMenuSample 480x800 |
+| MarbleMaze | pass | pass | Escape, code 0 | 0.00% (0 px) | MarbleMazeGame 800x480 |
+| HoneycombRush | pass | pass | Escape, code 0 | 0.00% (0 px) | Honeycomb Rush 800x480 |
+| CatapultWars | pass | pass | Escape, code 0 | 0.00% (0 px) | Catapult Sample 800x480 |
+| CardsStarterKit | pass | pass | Exit entry (Down twice, Enter): code 0 | 0.00% (0 px) | Blackjack 800x480 |
+| Spacewar | pass | pass | no key in source | 0.00% (0 px) | Spacewar 1280x720 |
+| ClientServerSample | pass | pass | Guide sign-in, then Escape: code 0 | 0.00% (0 px) on the session menu; first frame is CNA's Guide | Networking: Client/Server 1067x600 |
+| ShipGame | pass | pass | Quit Game (Down three times, Enter): code 0 | 51.28% (472600 px) | Ship Game 1280x720 |
+| NetRumble | pass | pass | Escape opens its exit box, Enter: code 0 | 1.03% (9538 px) | Net Rumble 4 1280x720 |
+| RolePlayingGame | pass | pass | Escape opens its exit box, Enter: code 0 | 0.00% (0 px) | Role-Playing Game Starter Kit 1280x720 |
+| NinjAcademy | pass | pass | Escape, code 0 | 26.01% (99884 px) | NinjAcademy 800x480 |
+
+### Games corpus
+
+Only six of the 198 `games/manifest.tsv` run rows still have their sources: the five Microsoft
+samples kept in `/rv/tmp/samples` and Speedy Blupi in `openeggbert/mobile-eggbert-legacy`. Built
+Debug and Release, captured through `scripts/capture-sample.sh --exe` in the same runner:
+
+| Game | Build | Run + capture | Exit | Window |
+|---|---|---|---|---|
+| MemoryMadness | pass | pass | Escape (Back), code 0 | Memory Madness 480x800 |
+| NetworkPrediction | pass | pass | Guide sign-in, then Escape: code 0 | Network Prediction 1067x600 |
+| NetworkStateManagement | pass | pass | Escape opens its exit box, Enter: code 0 | Network State Management 1067x600 |
+| PeerToPeer | pass | pass | Guide sign-in, then Escape: code 0 | Networking: Peer-to-Peer 1067x600 |
+| SavingEmbeddedImages | pass | pass | Escape (Back), code 0 | SavingEmbeddedImages 480x800 |
+| SpeedyBlupi | pass | pass | none on its title (Escape is the in-game pause, `games/SpeedyBlupi/README.md`) | Speedy Blupi 800x480 |
+
+Speedy Blupi's log carries SDL's "no window becoming fullscreen" for its `IsFullScreen = true` on a
+bare Xvfb, as documented. The other 192 rows were not run: `/rv/tmp/xna-games` and
+`/rv/tmp/xna-games-content` no longer exist (the walk-through deleted content and builds and the
+checkouts have since gone too), so they need fresh clones and, for most, XNA `BuildContent` under Wine.
+
+### Changed in this repository (uncommitted)
+
+- `samples/ShipGame/ShipGame.csproj`, `samples/ShipGame/missing.md`: Single Player died with
+  `DirectoryNotFoundException` for `content/screens/player_lights.xml`, read through the BCL as
+  Windows-cased `content/`; a `CnaWindowsPath` link `content` -> `Content` beside the executable fixes
+  it. Never reached before: the earlier pass only took Quit Game.
+- `scripts/capture-sample.sh`: the sample gets an unconnectable `DBUS_SESSION_BUS_ADDRESS` instead of
+  an unset one (inside the runner, an `xdg-desktop-portal-gtk` window appeared on the private display
+  and was captured instead of the sample); it refuses to run when its Xvfb does not own the display
+  number; `--exe` no longer needs a `samples/` directory, so games can be captured.
+- `scripts/requalify.sh`: honours `CNA_NATIVE_LIBRARY` (resolved once and exported) instead of always
+  asking `build-native-cna.sh`, which finds no OPENGLES3 compiled-effects tree in `../cna` today and
+  would fall back to the Debug `cmake-build-multi` library; header says how to run it in the runner.
+
+### Open
+
+- Six rows are newly eligible upstream and not attempted: `CSSAMPLE-085`, `086`, `087`, `094`,
+  `101`, `107` (the four avatar samples, ObjectPlacementOnAvatar, TiltPerspective).
+- The C++ comparison wants C++ binaries rebuilt from the same CNA revision before a pixel number is
+  read as evidence; the phone ports capture black on a bare Xvfb (Graphics3D).
+- Browser and Android requalification were not re-run.
+- Build output to delete once reviewed: `samples/*/bin`, `samples/*/obj` (1.8 GB),
+  `games/*/bin`, `games/*/obj` (241 MB); captures `/rv/tmp/cs-samples/requal-20261109-dotnetf23f73b-cnabc5e3c9a2/` (42 MB).
+
+---
+
 ## 2026-10-01 — every row on the Android emulator (CSX-071)
 
 `scripts/android-requalify.sh --desktop <requalify output>` runs each manifest row through
@@ -224,7 +407,7 @@ Next: the gallery rows. `CSSAMPLE-077` DynamicMenu takes the phone-host route; `
 stays `🛠` for its font provenance. No row drives input yet — every `missing.md` lists that as not
 verified, and an interaction harness in `capture-sample.sh` would let rows exercise their controls.
 
-## Active handoff — 2026-09-02 (third entry)
+## Handoff — 2026-09-02 (third entry)
 
 ### Work on next
 

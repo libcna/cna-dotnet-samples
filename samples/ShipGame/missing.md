@@ -4,6 +4,8 @@
 
 **The original C# runs unmodified and draws what the C++ port draws.** The game and its `BoxCollider` library, both verbatim, build in Debug and Release; the one warning is upstream's own comparison of a `KeyboardState` with null. It first died in its constructor: it gives `AudioEngine` `content/sounds/sounds.xgs` for `Content/Sounds/sounds.xgs`, which only a case-insensitive filesystem opens. Fixed in `../cna-cs` (CSX-096: XNA's file-taking APIs read paths as Windows did). The title frame differs by 51.60%, its animated background; title, ship and menu are the same. Quit Game (Down three times, Enter) exits 0.
 
+Single Player died on 2026-11-09 with `DirectoryNotFoundException` for `content/screens/player_lights.xml`: the game reads its light, spawn, power-up and ship lists through the BCL (`LightList.Load`, `EntityList.Load`), which XNA's path handling never sees, and only Windows found `Content/` under that name. The project links `content` to `Content` beside the executable (`CnaWindowsPath`, as NetRumble does for its audio directory); Single Player now opens the ship selection screen.
+
 ## Selected configuration
 
 | | |
@@ -75,6 +77,8 @@ fe01773d7f7d98561d9cd835d69aa7a0988d254150b3f61d3696538cdd55a230  ShipGame/ShipG
 
 The title frame at 2% fuzz against the C++ port's frame captured the same way, compared by eye; the exit path with Quit Game selected and Enter as the exit key (`/rv/tmp/cs-samples/ship-exit/`). Runs against CNA.NET `a6e0c50`, CNA `9976f4909`
 (`build-probe`, Release OPENGLES3, compiled effects) on a private Xvfb.
+
+Requalified 2026-11-09 against CNA.NET `f23f73b`, CNA `bc5e3c9a2` (C ABI 0.60.0; the library built from `30142a14d`, which differs only in CMake files): Debug and Release build, title frame, Quit Game exits 0, Enter on Single Player reaches ship selection with no exception (`/rv/tmp/cs-samples/requal-20261109-dotnetf23f73b-cnabc5e3c9a2/`, `exit2-ShipGame/`, `single-ShipGame/`).
 
 ## Artifacts
 

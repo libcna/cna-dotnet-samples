@@ -17,7 +17,7 @@ CNA.XnaCompat                   Microsoft.Xna.Framework facade   (../cna-dotnet)
         ↓
 CNA.Framework → CNA.Interop     P/Invoke boundary                (../cna-dotnet)
         ↓
-CNA C ABI → CNA C++             native runtime                   (../cnanext)
+CNA C ABI → CNA C++             native runtime                   (../cna)
 ```
 
 ## Prerequisites
@@ -26,8 +26,8 @@ CNA C ABI → CNA C++             native runtime                   (../cnanext)
 |---|---|
 | .NET SDK | 8.0 or later |
 | CNA.NET | sibling checkout, `../cna-dotnet` (or `../_bindings/cna-dotnet`) |
-| CNA | sibling checkout, `../cnanext`, built with `CNA_GRAPHICS_RENDERER=OPENGLES3` |
-| A GL ES 3 capable display | or `xvfb-run` for headless runs |
+| CNA | sibling checkout, `../cna`, built with `CNA_GRAPHICS_RENDERER=OPENGLES3` |
+| A GL ES 3 capable display | runs go through CNA's private display runner (`../cna/tools/platform/run_gpu_tests_private.sh`) |
 
 CNA.NET pins one reviewed CNA C ABI generation at a time, so the two checkouts must agree; see
 `../cna-dotnet/docs/native-abi-compatibility.md`.
@@ -35,14 +35,14 @@ CNA.NET pins one reviewed CNA C ABI generation at a time, so the two checkouts m
 ## Building and running
 
 ```bash
-scripts/build-native-cna.sh          # builds ../cnanext's C ABI library, reusing its build tree
+scripts/build-native-cna.sh          # builds ../cna's C ABI library, reusing its build tree
 dotnet build CnaDotnetSamples.sln -c Release
 scripts/run-sample.sh PrimitivesSample
 ```
 
 `scripts/run-sample.sh` resolves the native library, sets `CNA_NATIVE_LIBRARY` and starts the
-sample; `--headless` wraps it in `xvfb-run`, and `--frames N` runs a fixed-length deterministic
-pass. Any additional arguments are forwarded to the sample unchanged.
+sample on CNA's private display (never the desktop); `--headless` is accepted for compatibility,
+and `--frames N` runs a fixed-length deterministic pass. Any additional arguments are forwarded to the sample unchanged.
 
 macOS has neither OpenGL ES nor Weston (CNA `plans/plan_apple_m4.md` `AM4-228`). There,
 `build-native-cna.sh` defaults to `SOFTWARE` with `CNA_SOFTWARE_COMPILED_EFFECTS`, finds a

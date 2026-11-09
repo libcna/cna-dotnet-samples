@@ -11,5 +11,8 @@
   <ItemGroup>
     <Compile Include="ShipGame/**/*.cs" />
     <ProjectReference Include="BoxCollider.csproj" />
+    <!-- The game reads its light, spawn, power-up and ship lists through the BCL
+         (LightList.Load, EntityList.Load) as "content/...", which Windows found in Content/. -->
+    <CnaWindowsPath Include="content" Path="content" LinksTo="Content" />
   </ItemGroup>
 </Project>

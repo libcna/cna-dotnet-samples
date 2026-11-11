@@ -5,7 +5,51 @@ inherits.
 
 ---
 
-## Active handoff — 2026-11-09: every row requalified on CNA `bc5e3c9a2` (C ABI 0.60.0)
+## Active handoff — 2026-11-11: every row rechecked on CNA `4ef67873b` (C ABI 0.60.0)
+
+The 2026-11-09 requalification below was repeated against CNA `next` `4ef67873b` and CNA.NET
+`develop` `c8dd51e`, which re-pins the binding to that CNA. Every row and every result of the
+2026-11-09 table still holds: 84 of 84 rows build (Debug and Release), run, show their window and
+exit as before. No CNA, CNA.NET or sharp-runtime defect was found and nothing in this repository
+changed. CNA changed in between: stock effects latch their parameters at `EffectPass.Apply`, stock
+effect parameters start at zero, clones of stock effects and SpriteEffect draw with the stock
+shaders, several content refusals and finite XACT loops follow XNA.
+
+| Repository | Head |
+|---|---|
+| cna-dotnet-samples | `develop` `1bd99ff` |
+| `../cna-dotnet` | `develop` `c8dd51e`; its ABI matrix admits exactly 0.60.0 |
+| `../cna` | `next` `4ef67873b`, C ABI 0.60.0 |
+| `../sharp-runtime` | `next` `f8ea4b1f` (inside the CNA library) |
+| Native library | `../cna-dotnet/build-probe/cna-capi-install/lib/libcna_c_api.so`: Release, `OPENGLES3`, `CNA_EASYGL_COMPILED_EFFECTS=ON`, built from CNA `4ef67873b` |
+
+Same commands as below, with `--out /rv/tmp/cs-samples/requal-20261111-dotnetc8dd51e-cna4ef67873b`.
+The exit paths of the six menu and sign-in rows were taken as on 2026-11-09 (`exit-*`, and
+`exit3-ClientServerSample`: Enter, a profile name typed as key presses, Enter, Escape to close the
+Guide, then Escape exits 0). The six games were built (Debug and Release) and captured the same way
+(`games/` in the output directory); they exit as before.
+
+- 84 of 84 rows pass; the five build warnings are the same upstream CS0618 and CS8073; the C# run
+  logs are free of exceptions, failures and refusals (Speedy Blupi keeps its documented SDL
+  fullscreen message).
+- Each C# capture was compared with its 2026-11-09 capture: 42 are pixel-identical, and every other
+  difference is animation phase or a clock-seeded scene. The exit-path frames of GameStateManagement,
+  CardsStarterKit, ClientServerSample and RolePlayingGame are pixel-identical to 2026-11-09.
+- `scripts/check-verbatim.sh` (`XNA_SAMPLES_ROOT=/rv/data/library/XNAGameStudio/Samples`): 84
+  checked, 0 failures. `scripts/check-content.sh`: 2138 identical, 0 drifted, 0 sourced elsewhere.
+  `scripts/check-eligibility.sh` exits 1 for the same six newly eligible rows as on 2026-11-09.
+- The C++ pixel column was re-measured; it is still against the September C++ binaries, so it
+  remains a measurement, not evidence.
+
+The build output (`samples/*/bin`, `samples/*/obj`, `games/*/bin`, `games/*/obj`) and the new
+capture directory were deleted after review.
+
+The open items of the 2026-11-09 entry are unchanged. Its "uncommitted" changes were committed in
+`1bd99ff`.
+
+---
+
+## 2026-11-09: every row requalified on CNA `bc5e3c9a2` (C ABI 0.60.0)
 
 Every `samples/manifest.tsv` row was rebuilt (Debug and Release), run, captured and, where its
 source has one, taken through its own exit path against the current chain: 84 of 84 pass. No CNA,

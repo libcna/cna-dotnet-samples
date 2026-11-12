@@ -9,8 +9,6 @@
     <!-- Upstream ships only the phone project, and a phone game has no Main: the XAP host supplied it. -->
     <CnaPhoneGame>NinjAcademy.NinjAcademyGame</CnaPhoneGame>
     <CnaPhoneCompat>true</CnaPhoneCompat>
-    <!-- It calls the Guide without a GamerServicesComponent; the host adds one (Directory.Build.targets). -->
-    <CnaPhoneGamerServices>true</CnaPhoneGamerServices>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
   </PropertyGroup>
   <ItemGroup>

@@ -61,12 +61,3 @@ The first frame at 2% fuzz against `requal-20260926/cna-native-opengles3-audio/n
 ## Artifacts
 
 `/rv/tmp/cs-samples/gallery-batch-60/MarbleMaze/` (C# capture and logs) and `.../cpp/` (the C++ port through the same route).
-
-## Gamer services from the host (2026-11-12)
-
-CNA next follows Windows XNA 4.0 Refresh: the Guide refuses `BeginShowKeyboardInput`/
-`BeginShowMessageBox` with `InvalidOperationException` until gamer services are initialized
-(`GamerServicesDispatcher.get_PacketBuffer` IL_0000-0011; owner decision 2026-11-12). This phone
-title calls the Guide without adding a `GamerServicesComponent`, so its project sets
-`<CnaPhoneGamerServices>true</CnaPhoneGamerServices>` and the generated phone host adds one before
-`Run`. The upstream source stays verbatim.

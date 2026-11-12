@@ -8,5 +8,7 @@
     <!-- Upstream ships only the phone project: TRACE;WINDOWS_PHONE, so its Main is guarded out. -->
     <CnaPhoneGame>HoneycombRush.HoneycombRush</CnaPhoneGame>
     <CnaPhoneCompat>true</CnaPhoneCompat>
+    <!-- It calls the Guide without a GamerServicesComponent; the host adds one (Directory.Build.targets). -->
+    <CnaPhoneGamerServices>true</CnaPhoneGamerServices>
   </PropertyGroup>
 </Project>

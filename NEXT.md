@@ -5,6 +5,44 @@ inherits.
 
 ---
 
+## Active handoff — 2026-11-12: every row rechecked on CNA `a6c2ffe3d` (C ABI 0.60.0)
+
+Repeated against CNA `next` `a6c2ffe3d`, sharp-runtime `next` `de06c17c` and CNA.NET `develop`
+`2bee164`, which re-pins the binding to that CNA and follows nine of its corrections (BufferNeeded
+cadence, cue-variable IndexOutOfRangeException, stored SoundEffect durations, float/bool index
+buffers, gesture and FromStream refusals, nonpositive texture level counts, Duration after Dispose,
+instancing/MRT refusals). CNA changed in between to follow XNA 4.0 Refresh: SoundEffect.Play needs a
+first FrameworkDispatcher.Update, every Guide kernel call needs initialized gamer services (CNA.NET's
+PhoneTitle.EnsureGuide already provides them for the phone titles), Song relationships are Empty
+objects, BufferNeeded follows XNA's cadence, disposed XACT cues report no state.
+
+| Repository | Head |
+|---|---|
+| cna-dotnet-samples | `develop` `69941e0` |
+| `../cna-dotnet` | `develop` `2bee164` (measured as `32e86a9`, whose tree is identical; only the message was corrected); its ABI matrix admits exactly 0.60.0 |
+| `../cna` | `next` `a6c2ffe3d`, C ABI 0.60.0 |
+| `../sharp-runtime` | `next` `de06c17c` (inside the CNA library) |
+| Native library | `../cna-dotnet/artifacts/native-local/lib/libcna_c_api.so`: Release `OPENGLES3`, C API shared, CNAEXT, DEVICES, compiled effects, video, voice (cna-dotnet's CI configuration), CNACApi component |
+
+Same commands as below, with `--out /rv/tmp/cs-samples/requal-20261112-dotnet32e86a9-cnaa6c2ffe3d`;
+the six menu and sign-in rows were taken through their exits with held keys (Escape then Return for
+GameStateManagement, NetRumble and RolePlayingGame; Down twice then Return for CardsStarterKit; Down
+three times then Return for ShipGame; Return, `key r e q u a l`, Return, Escape through CNA's Guide
+sign-in, then Escape for ClientServerSample).
+
+- 84 of 84 rows build (Debug and Release), run, show their window and exit as before: code 0 for
+  every row whose source has an exit path, including the six through their menus and the Guide.
+- `scripts/check-verbatim.sh` (`XNA_SAMPLES_ROOT=/rv/data/library/XNAGameStudio/Samples`): 84
+  checked, 0 failures. `scripts/check-content.sh`: 2138 identical, 0 drifted, 0 sourced elsewhere.
+  `scripts/check-eligibility.sh` exits 1 for the same six newly eligible rows.
+- No CNA, CNA.NET or sharp-runtime defect was found and nothing in this repository changed (the
+  2026-11-12 host GamerServicesComponent for three phone titles was reverted in `69941e0`, because
+  CNA.NET's phone host already initializes gamer services).
+
+The build output (`samples/*/bin`, `samples/*/obj`) was deleted after review.
+
+---
+
 ## Active handoff — 2026-11-11: every row rechecked on CNA `4ef67873b` (C ABI 0.60.0)
 
 The 2026-11-09 requalification below was repeated against CNA `next` `4ef67873b` and CNA.NET

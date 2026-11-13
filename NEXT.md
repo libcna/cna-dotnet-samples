@@ -5,6 +5,36 @@ inherits.
 
 ---
 
+## Active handoff — 2026-11-13: every row rechecked on CNA `d1c936225` (C ABI 0.60.0)
+
+Repeated against CNA `next` `d1c936225`, sharp-runtime `next` `de06c17c` and CNA.NET `develop`
+`86a1698`, which re-pins the binding to that CNA and follows its content and Guide corrections
+(texture and SpriteFont constructor/level failures propagate as XNA's readers let them; Guide End
+waits on the exposed event). CNA changed in between to follow XNA in SoundEffect disposal,
+DynamicSoundEffectInstance.Stop, texture-level reading, StorageDevice polling and Guide End waits.
+
+| Repository | Head |
+|---|---|
+| cna-dotnet-samples | `develop` `25f08d9` |
+| `../cna-dotnet` | `develop` `86a1698`; its ABI matrix admits exactly 0.60.0 |
+| `../cna` | `next` `d1c936225`, C ABI 0.60.0 |
+| `../sharp-runtime` | `next` `de06c17c` (inside the CNA library) |
+| Native library | as below (cna-dotnet's CI configuration, CNACApi component) |
+
+Same commands as below, with `--out /rv/tmp/cs-samples/requal-20261113-cnad1c936225` and the same
+held-key exits for the six menu and sign-in rows.
+
+- 84 of 84 rows build (Debug and Release), run, show their window and exit as before: code 0 for
+  every row whose source has an exit path, including the six through their menus and the Guide.
+- `scripts/check-verbatim.sh`: 84 checked, 0 failures. `scripts/check-content.sh`: 2138 identical,
+  0 drifted, 0 sourced elsewhere. `scripts/check-eligibility.sh` exits 1 for the same six newly
+  eligible rows.
+- No CNA, CNA.NET or sharp-runtime defect was found and nothing in this repository changed.
+
+The build output (`samples/*/bin`, `samples/*/obj`) was deleted after review.
+
+---
+
 ## Active handoff — 2026-11-12: every row rechecked on CNA `a6c2ffe3d` (C ABI 0.60.0)
 
 Repeated against CNA `next` `a6c2ffe3d`, sharp-runtime `next` `de06c17c` and CNA.NET `develop`
